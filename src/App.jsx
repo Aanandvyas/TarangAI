@@ -1,6 +1,8 @@
 import React from 'react'
 import Navbar from './components/Navbar'
 import Landing from './components/Landing'
+import Nritya from './components/Nritya'
+
 
 const App = () => {
   return (
@@ -8,6 +10,7 @@ const App = () => {
       <div>
         <Navbar />
         <Landing/>
+        <Nritya />
       </div>
     </div>
   )
