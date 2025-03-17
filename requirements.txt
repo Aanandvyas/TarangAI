@@ -1,0 +1,15 @@
+#!below command to install the required python packages
+#pip install -r requirements.txt
+torch
+torchvision
+transformers
+timm
+opencv-python
+pandas
+scikit-learn
+numpy
+matplotlib
+tqdm
+torchvision
+scipy
+ffmpeg-python
