@@ -9,7 +9,7 @@ const AboutPage = () => {
                         Our <br />
                         Story
                     </h1>
-                    <video muted autoPlay loop className="w-1/2 h-auto object-contain bg-red-500 ml-4" src="src\assets\video\video5.mp4"></video>
+                    <video muted autoPlay loop className="w-1/2 h-auto object-contain  ml-4" src="src\assets\video\video5.mp4"></video>
                 </div>
                 <p className="mt-6 text-lg ">
                     Lorem ipsum dolor sit amet consectetur adipisicing elit. Perferendis?
