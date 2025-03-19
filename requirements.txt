@@ -2,17 +2,20 @@
 #pip install -r requirements.txt
 
 av
-torch
-torchvision
-transformers
-timm
+caer
+ffmpeg-python
+matplotlib
+mediapipe
+numpy
 opencv-python
 pandas
-scikit-learn
-numpy
-matplotlib
-tqdm
-torchvision
-scipy
-ffmpeg-python
 safetensors
+scikit-learn
+scipy
+timm
+torch
+torchaudio
+torchvision
+transformers
+tqdm
+
