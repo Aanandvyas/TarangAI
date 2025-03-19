@@ -13,3 +13,4 @@ tqdm
 torchvision
 scipy
 ffmpeg-python
+safetensors

@@ -1,11 +1,16 @@
 from transformers import TimesformerModel
 
-model_name = "facebook/timesformer-base-finetuned-k400"
-
-print(f"Downloading {model_name}...")
-model = TimesformerModel.from_pretrained(model_name)
-
-#Change the path according to your system
-model.save_pretrained(r"D:\Scholar\Bhaskar Chari 2022BAI10155\Models")
-
-print("TimeSformer Model Downloaded and Saved Successfully!")
+# Required for multiprocessing on Windows
+if __name__ == "__main__":  
+    model_name = "facebook/timesformer-base-finetuned-k400"
+    
+    print(f"Downloading {model_name}...")
+    
+    # Load model from Hugging Face
+    model = TimesformerModel.from_pretrained(model_name)
+    
+    # Save the model in a specified directory
+    save_path = r"E:\Codes\Models"
+    model.save_pretrained(save_path)
+    
+    print(f"TimeSformer Model Downloaded and Saved Successfully at {save_path}!")
