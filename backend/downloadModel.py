@@ -1,5 +1,7 @@
 from transformers import TimesformerModel
 
+# NO PREPROCESSOR_CONFIG file (UPDATE NEEDED)
+
 # Required for multiprocessing on Windows
 if __name__ == "__main__":  
     model_name = "facebook/timesformer-base-finetuned-k400"
