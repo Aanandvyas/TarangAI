@@ -1,7 +1,9 @@
 import { div } from "framer-motion/client";
+import { motion } from "framer-motion";
 import React, { useState } from "react";
 
 const Nritya = () => {
+
   const [elems, setElems] = useState([
     {
       heading: "Kathak",
@@ -36,8 +38,17 @@ const Nritya = () => {
   return (
     <div className="w-full relative">
       <div className="py-14 mx-auto max-w-screen-2xl sm:px-9 px-9">
-        <h1 className="text-6xl font-mono sm:text-[10rem] sm:leading-none sm:tracking-tight">
-          Nritya
+        <h1 className="text-6xl font-mono sm:text-[10rem] py-2 overflow-hidden sm:leading-none sm:tracking-tight">
+          <motion.span
+            initial={{ rotate: 90, y: "40%", opacity: 0 }}
+            whileInView={{ rotate: 0, y: 0, opacity: 1 }}
+            viewport={{ once: true }}
+            className="inline-block origin-left"
+            transition={{ ease: [0.22, 1, 0.36, 1], duration: 0.8, delay: 0.2 }}
+          >
+            Nritya
+          </motion.span>
+
         </h1>
         <p className="mt-6 font-mono text-md sm:text-xl sm:leading-8 leading-5">
           This part offers a glimpse into the diverse traditional dances of
@@ -50,20 +61,32 @@ const Nritya = () => {
           {elems.map((item, index) => {
             return (
               <div key={index} className="elem w-full sm:w-[48%] mt-10">
-                <div className="video w-full h-[105vw] sm:h-96 relative overflow-hidden">
-                  <img
-                    className="hidden sm:block object-cover h-full w-full"
+                <div className="video relative w-full h-[105vw] sm:h-96 overflow-hidden">
+                  {/* Overlay image with fade-out animation on hover */}
+                  <motion.img
+                    initial={{ opacity: 1 }}
+                    whileHover={{ opacity: 0 }}
+                    data-scroll
+                    data-scroll-speed="-.1"
+                    className="hidden sm:absolute sm:z-20 sm:inset-0 sm:block object-cover w-full h-full"
                     src={item.img}
                     alt={item.heading}
+                    loading="lazy"
                   />
+
+                  {/* Background video element */}
                   <video
                     autoPlay
                     muted
                     loop
-                    className="block sm:hidden scale-[1.5] h-full w-full absolute"
+                    playsInline
+                    className="absolute inset-0 z-10 scale-[1.5] object-cover"
                     src={item.video}
-                  ></video>
+                  >
+                    Your browser does not support the video tag.
+                  </video>
                 </div>
+
                 <div className="mt-4">
                   <h3 className="font-semibold">{item.heading}</h3>
                   <h3 className="opacity-40">{item.subheading}</h3>
