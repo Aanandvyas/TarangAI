@@ -126,7 +126,8 @@ for dance_form in tqdm(dance_forms, desc="Processing Dance Forms"):
     # Load pose mapping
     pose_mapping = load_pose_mapping(mapping_csv)
 
-    for video_file in glob(os.path.join(video_folder, "*.mp4")):
+    # Process videos (.mp4 and .mov)
+    for video_file in glob(os.path.join(video_folder, "*.mp4")) + glob(os.path.join(video_folder, "*.mov")):
         frames = process_video(video_file, image_folder)
 
         for frame in frames:
@@ -134,7 +135,8 @@ for dance_form in tqdm(dance_forms, desc="Processing Dance Forms"):
             pose_type = pose_mapping.get(os.path.basename(video_file), "Unknown")
             metadata.append([os.path.basename(frame), dance_form, os.path.basename(video_file), img_path, pose_type, keypoints["pose"], keypoints["hands"], keypoints["face"]])
 
-    for image_file in glob(os.path.join(image_folder, "*.jpg")):
+    # Process images (.jpg, .jpeg, .png)
+    for image_file in glob(os.path.join(image_folder, "*.jpg")) + glob(os.path.join(image_folder, "*.jpeg")) + glob(os.path.join(image_folder, "*.png")):
         img_path, keypoints, aug_paths = process_images(image_file, image_folder)
         pose_type = pose_mapping.get(os.path.basename(image_file), "Unknown")
         metadata.append([os.path.basename(image_file), dance_form, "N/A", img_path, pose_type, keypoints["pose"], keypoints["hands"], keypoints["face"]])
