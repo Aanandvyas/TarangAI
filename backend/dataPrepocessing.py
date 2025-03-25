@@ -11,12 +11,12 @@ import albumentations as A
 # Set image size
 IMAGE_SIZE = 256
 
-# Initialize MediaPipe Pose and Face Detection models
+# Initialize MediaPipe Models
 mp_pose = mp.solutions.pose.Pose()
 mp_hands = mp.solutions.hands.Hands()
 mp_face = mp.solutions.face_mesh.FaceMesh()
 
-# Augmentation Pipeline (Rotation, Flip, Brightness Adjustment)
+# Augmentation Pipeline
 augmentation = A.Compose([
     A.HorizontalFlip(p=0.5),
     A.Rotate(limit=20, p=0.5),
@@ -26,8 +26,10 @@ augmentation = A.Compose([
 # Create dataset folders if they don't exist
 DATASET_DIR = "Dataset"
 OUTPUT_CSV = os.path.join(DATASET_DIR, "metadata.csv")
-KEYPOINTS_DIR = os.path.join(DATASET_DIR, "keypoints")
-os.makedirs(KEYPOINTS_DIR, exist_ok=True)
+KEYPOINTS_JSON = os.path.join(DATASET_DIR, "keypoints.json")
+
+# Dictionary to store all keypoints
+all_keypoints = {}
 
 # Helper function to extract MediaPipe keypoints
 def extract_keypoints(image):
@@ -43,8 +45,10 @@ def extract_keypoints(image):
     # Hand detection
     results_hands = mp_hands.process(image_rgb)
     if results_hands.multi_hand_landmarks:
-        for hand_landmarks in results_hands.multi_hand_landmarks:
-            keypoints["hands"].append([[lm.x, lm.y, lm.z] for lm in hand_landmarks.landmark])
+        keypoints["hands"] = [
+            [[lm.x, lm.y, lm.z] for lm in hand_landmarks.landmark]
+            for hand_landmarks in results_hands.multi_hand_landmarks
+        ]
 
     # Face detection
     results_face = mp_face.process(image_rgb)
@@ -52,6 +56,14 @@ def extract_keypoints(image):
         keypoints["face"] = [[lm.x, lm.y, lm.z] for lm in results_face.multi_face_landmarks[0].landmark]
 
     return keypoints
+
+# Load pose mapping CSV for a given dance form
+def load_pose_mapping(mapping_csv):
+    """Loads the mapping CSV for a dance form to get pose types."""
+    if os.path.exists(mapping_csv):
+        df = pd.read_csv(mapping_csv)
+        return dict(zip(df["video_file"], df["pose_type"]))
+    return {}
 
 # Process videos: Convert to frames
 def process_video(video_path, output_folder):
@@ -86,11 +98,7 @@ def process_images(image_path, output_folder):
 
     # Extract keypoints
     keypoints = extract_keypoints(image_resized)
-
-    # Save keypoints to JSON
-    json_path = os.path.join(KEYPOINTS_DIR, f"{base_name}.json")
-    with open(json_path, "w") as json_file:
-        json.dump(keypoints, json_file, indent=4)
+    all_keypoints[base_name] = keypoints  # Store keypoints in the main JSON dict
 
     # Perform Augmentation
     augmented_paths = []
@@ -98,45 +106,46 @@ def process_images(image_path, output_folder):
         augmented = augmentation(image=image_resized)["image"]
         aug_path = os.path.join(output_folder, f"{base_name}_aug{i+1}.jpg")
         cv2.imwrite(aug_path, augmented)
-        augmented_paths.append(aug_path)
+        
+        aug_keypoints = extract_keypoints(augmented)
+        all_keypoints[f"{base_name}_aug{i+1}"] = aug_keypoints  # Store augmented keypoints
 
-    return new_image_path, augmented_paths, json_path
+        augmented_paths.append((aug_path, aug_keypoints))
+
+    return new_image_path, keypoints, augmented_paths
 
 # Process dataset and generate CSV
 metadata = []
 dance_forms = ["Bharatanatyam", "Kathak", "Kuchipudi", "Kathakali", "Odissi", "Sattriya"]
-clothing_labels = {
-    "Bharatanatyam": "Saree",
-    "Kathak": "Anarkali Dress",
-    "Kuchipudi": "Saree",
-    "Kathakali": "Traditional Costume",
-    "Odissi": "Sambalpuri Saree",
-    "Sattriya": "Mekhela Chador"
-}
 
 for dance_form in tqdm(dance_forms, desc="Processing Dance Forms"):
     image_folder = os.path.join(DATASET_DIR, dance_form, "images")
     video_folder = os.path.join(DATASET_DIR, dance_form, "vids")
+    mapping_csv = os.path.join(DATASET_DIR, dance_form, f"{dance_form}_mapping.csv")
+
+    # Load pose mapping
+    pose_mapping = load_pose_mapping(mapping_csv)
 
     for video_file in glob(os.path.join(video_folder, "*.mp4")):
         frames = process_video(video_file, image_folder)
 
         for frame in frames:
-            img_path, aug_paths, keypoints_path = process_images(frame, image_folder)
-            metadata.append([os.path.basename(frame), dance_form, os.path.basename(video_file), img_path, keypoints_path, clothing_labels[dance_form]])
-            
-            for aug_img in aug_paths:
-                metadata.append([os.path.basename(aug_img), dance_form, os.path.basename(video_file), aug_img, keypoints_path, clothing_labels[dance_form]])
+            img_path, keypoints, aug_paths = process_images(frame, image_folder)
+            pose_type = pose_mapping.get(os.path.basename(video_file), "Unknown")
+            metadata.append([os.path.basename(frame), dance_form, os.path.basename(video_file), img_path, pose_type, keypoints["pose"], keypoints["hands"], keypoints["face"]])
 
     for image_file in glob(os.path.join(image_folder, "*.jpg")):
-        img_path, aug_paths, keypoints_path = process_images(image_file, image_folder)
-        metadata.append([os.path.basename(image_file), dance_form, "N/A", img_path, keypoints_path, clothing_labels[dance_form]])
-        
-        for aug_img in aug_paths:
-            metadata.append([os.path.basename(aug_img), dance_form, "N/A", aug_img, keypoints_path, clothing_labels[dance_form]])
+        img_path, keypoints, aug_paths = process_images(image_file, image_folder)
+        pose_type = pose_mapping.get(os.path.basename(image_file), "Unknown")
+        metadata.append([os.path.basename(image_file), dance_form, "N/A", img_path, pose_type, keypoints["pose"], keypoints["hands"], keypoints["face"]])
+
+# Save all keypoints to a single JSON file
+with open(KEYPOINTS_JSON, "w") as f:
+    json.dump(all_keypoints, f, indent=4)
 
 # Save metadata to CSV
-df = pd.DataFrame(metadata, columns=["id", "dance_form", "video_file", "image_file", "keypoints_file", "clothing"])
+df = pd.DataFrame(metadata, columns=["id", "dance_form", "video_file", "image_file", "pose_type", "pose_keypoints", "hand_keypoints", "face_keypoints"])
 df.to_csv(OUTPUT_CSV, index=False)
 
 print("Preprocessing complete. Metadata saved to", OUTPUT_CSV)
+print("All keypoints saved to", KEYPOINTS_JSON)
