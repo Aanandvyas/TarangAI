@@ -1,52 +1,64 @@
-import os
-import shutil
+﻿import os
+import cv2
 import pandas as pd
 
-# Define dataset path
-dataset_path = r"E:\DataSets\tarangDataset - Copy"
-output_metadata_file = os.path.join(dataset_path, "metadata.csv")
+# Paths and Config
+DATASET_PATH = r"E:\DataSets\tarangDataset\bharatnatyam"
+EXCEL_FILE = os.path.join(DATASET_PATH, "adavus_mapping.xlsx")  # Update to your XLSX name
+FRAME_RATE = 1  # 1 frame per second
 
-# Ensure consistent structure across dance forms
-dance_forms = ["bharatnatyam", "kathakali", "sattriya"]
-splits = ["Training", "Valid", "Test"]
+def extract_frames(video_path, output_folder, frame_rate=1):
+    """Extract frames from a video at ~frame_rate frames per second."""
+    os.makedirs(output_folder, exist_ok=True)
 
-for dance in dance_forms:
-    dance_path = os.path.join(dataset_path, dance)
-    if not os.path.exists(dance_path):
-        continue  # Skip missing folders
-    
-    # Create Training, Valid, Test directories if missing
-    for split in splits:
-        split_path = os.path.join(dance_path, split)
-        os.makedirs(split_path, exist_ok=True)
+    cap = cv2.VideoCapture(video_path)
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    if fps <= 0:
+        fps = 30  # fallback if FPS not detected
 
-# Collect metadata
-metadata = []
+    # Interval in frames between extractions
+    frame_interval = max(1, int(fps // frame_rate))
 
-for dance in dance_forms:
-    for split in splits:
-        split_path = os.path.join(dataset_path, dance, split)
-        if not os.path.exists(split_path):
+    frame_count = 0
+    success, frame = cap.read()
+    while success:
+        if frame_count % frame_interval == 0:
+            frame_filename = f"frame_{frame_count:04d}.jpg"
+            frame_path = os.path.join(output_folder, frame_filename)
+            cv2.imwrite(frame_path, frame)
+        success, frame = cap.read()
+        frame_count += 1
+
+    cap.release()
+
+def main():
+    # 1. Read the Excel file with columns "video_name" and "adavu_name"
+    df = pd.read_excel(EXCEL_FILE)
+
+    # 2. For each row, extract frames to "extracted/[adavu_name]/[video_name_without_ext]"
+    for idx, row in df.iterrows():
+        video_name = str(row["video_name"]).strip()
+        adavu_name = str(row["adavu_name"]).strip()
+
+        # Skip empty lines or missing video names
+        if not video_name or not adavu_name or video_name == "nan":
+            print(f"Skipping row {idx}: missing data.")
             continue
-        
-        for mudra in os.listdir(split_path):
-            mudra_path = os.path.join(split_path, mudra)
-            if not os.path.isdir(mudra_path):
-                continue
-            
-            for file in os.listdir(mudra_path):
-                file_path = os.path.join(mudra_path, file)
-                
-                # Only consider images/videos
-                if file.lower().endswith((".jpg", ".png", ".mp4", ".avi")):
-                    openpose_json = file.replace(".jpg", ".json").replace(".png", ".json").replace(".mp4", ".json").replace(".avi", ".json")
-                    openpose_path = os.path.join(mudra_path, openpose_json)
-                    has_openpose = os.path.exists(openpose_path)
-                    
-                    metadata.append([dance, split, mudra, file, has_openpose])
 
-# Save metadata as CSV
-metadata_df = pd.DataFrame(metadata, columns=["Dance Form", "Split", "Mudra", "File", "Has OpenPose"])
-metadata_df.to_csv(output_metadata_file, index=False)
+        video_full_path = os.path.join(DATASET_PATH, video_name)
+        if not os.path.exists(video_full_path):
+            print(f"❌ Video not found: {video_full_path}")
+            continue
 
-print(f"Dataset organized! Metadata saved to {output_metadata_file}")
+        # Example: videos/Thattadavu1.mp4 -> "Thattadavu1"
+        video_base = os.path.splitext(os.path.basename(video_name))[0]
+
+        # Output folder => E:\DataSets\tarangDataset\bharatnatyam\extracted\Thattadavu\Thattadavu1
+        output_folder = os.path.join(DATASET_PATH, "extracted", adavu_name, video_base)
+
+        print(f"Extracting frames from {video_full_path} → {output_folder}")
+        extract_frames(video_full_path, output_folder, FRAME_RATE)
+
+if __name__ == "__main__":
+    main()
+    print("✅ Frame extraction complete!")
