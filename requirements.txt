@@ -18,4 +18,9 @@ torchaudio
 torchvision
 transformers
 tqdm
-
+xgboost
+accelerate
+diffusers
+transformers
+safetensores
+sklearn
