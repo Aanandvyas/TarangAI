@@ -1,0 +1,32 @@
+#! command to install the required python packages
+# before running the below code open the terminal where the file is
+# pip install -r requirements.txt
+
+av
+caer
+mediapipe
+opencv-python
+ffmpeg-python
+pillow
+
+pandas
+matplotlib
+numpy
+dotenv
+bitsandbytes
+
+torch
+torchaudio
+torchvision
+safetensors
+scikit-learn
+tf-keras
+
+transformers
+mistral_inference
+scipy
+timm
+tqdm
+xgboost
+accelerate
+diffusers
