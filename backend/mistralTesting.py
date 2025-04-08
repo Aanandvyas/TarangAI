@@ -7,7 +7,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Run Mistral chat model")
     parser.add_argument("--model_path", type=str, 
-                        default=r"F:\TarangAI - 23BCE11755\models\models--mistralai--Mistral-7B-Instruct-v0.3\snapshots\e0bc86c23ce5aae1db576c8cca6f06f1f73af2db",
+                        default=r"E:\models\models--mistralai--Mistral-7B-Instruct-v0.3\snapshots\e0bc86c23ce5aae1db576c8cca6f06f1f73af2db",
                         help="Path to the model")
     parser.add_argument("--precision", type=str, choices=["fp16", "int8", "int4"], default="fp16",
                         help="Precision for model loading")
