@@ -24,4 +24,9 @@ node_modules
 .vs
 .vscode/*
 !.vscode/extensions.json
+<<<<<<< Updated upstream
 CppProperties.json
+=======
+package-lock.json
+package.json
+>>>>>>> Stashed changes
