@@ -49,7 +49,6 @@ def generate_response(
     temperature: float = 0.7,
     top_p: float = 0.9
 ) -> str:
-    # Prepare conversation with history if provided
     if conversation_history is None:
         messages = [{"role": "user", "content": prompt}]
     else:
@@ -57,10 +56,8 @@ def generate_response(
     
     formatted_prompt = tokenizer.apply_chat_template(messages, tokenize=False)
     
-    # Tokenize the prompt
     inputs = tokenizer(formatted_prompt, return_tensors="pt").to(model.device)
     
-    # Generate with streamed tokens
     with torch.no_grad():
         outputs = model.generate(
             **inputs,
@@ -70,10 +67,8 @@ def generate_response(
             top_p=top_p,
         )
     
-    # Decode the response
     response = tokenizer.decode(outputs[0][inputs.input_ids.shape[1]:], skip_special_tokens=True)
     
-    # Clean up memory
     del inputs, outputs
     gc.collect()
     if torch.cuda.is_available():
@@ -84,14 +79,11 @@ def generate_response(
 def main():
     args = parse_arguments()
     
-    # Load model and tokenizer
     model, tokenizer = load_model(args.model_path, args.precision)
     print("Model loaded successfully!")
     
-    # Keep track of conversation history
     conversation_history = []
     
-    # Interactive chat loop
     print("\nMistral-7B-Instruct Chat")
     print("Commands: 'exit' to quit, 'clear' to reset conversation, 'params' to modify parameters")
     print("-" * 50)
@@ -119,10 +111,8 @@ def main():
                 print("Invalid input. Using previous parameters.")
             continue
         
-        # Add user message to history
         conversation_history.append({"role": "user", "content": user_input})
         
-        # Generate and print response
         print("\nMistral: ", end="", flush=True)
         response = generate_response(
             model, 
@@ -135,10 +125,7 @@ def main():
         )
         print(response)
         
-        # Add assistant response to history
         conversation_history.append({"role": "assistant", "content": response})
-        
-        # Keep conversation history at a reasonable size to avoid context overflows
         if len(conversation_history) > 10:
             conversation_history = conversation_history[-10:]
 
