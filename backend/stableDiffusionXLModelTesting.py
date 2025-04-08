@@ -5,7 +5,7 @@ path = r"F:\TarangAI - 23BCE11755\models\models--stabilityai--stable-diffusion-x
 
 pipe = DiffusionPipeline.from_pretrained(path, torch_dtype=torch.float16, use_safetensors=True, variant="fp16")
 pipe.to("cuda")
-prompt = "Mim Jong Un shanking hands with Modi"
+prompt = "Kim Jong Un shanking hands with Modi"
 # prompt = "Elon Musk and meloni handshake while modi is jelous behind"
 images = pipe(prompt=prompt).images[0]
 images.show()
